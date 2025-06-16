@@ -1,0 +1,40 @@
+name: Validate config
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/*
+      - Exec.java
+      - build.properties
+  push:
+    paths:
+      - .github/workflows/*
+      - Exec.java
+      - build.properties
+  workflow_dispatch:
+    inputs:
+      downloads:
+        description: 'Validate all downloads'
+        type: boolean
+
+jobs:
+
+  validate:
+    name: Validate
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'temurin'
+      - name: Validate configuration
+        if: ${{ ! inputs.downloads }}
+        run: java Exec.java validate
+      - name: Validate all downloads
+        if: ${{ inputs.downloads }}
+        run: java Exec.java validate-downloads

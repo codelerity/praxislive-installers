@@ -1,0 +1,7 @@
+cache/
+dist/
+nbpackage/
+
+*.tar.gz
+*.zip
+

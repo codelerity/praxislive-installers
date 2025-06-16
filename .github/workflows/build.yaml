@@ -1,0 +1,302 @@
+name: Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      build-deb-x64:
+        description: 'Build Linux .deb for x86_64'
+        type: boolean
+      build-deb-arm:
+        description: 'Build Linux .deb for aarch64'
+        type: boolean
+      build-rpm-x64:
+        description: 'Build Linux .rpm for x86_64'
+        type: boolean
+      build-windows-x64:
+        description: 'Build Windows .exe for x86_64'
+        type: boolean
+      build-macos-arm:
+        description: 'Build macOS .pkg for aarch64'
+        type: boolean
+      build-macos-x64:
+        description: 'Build macOS .pkg for x86_64'
+        type: boolean
+
+
+jobs:
+  
+  validate:
+    name: Validate and cache
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'temurin'
+      - name: Setup caches
+        uses: actions/cache@v4
+        with:
+          path: cache
+          key: ${{ hashFiles('Exec.java', 'build.properties') }}
+          enableCrossOsArchive: true
+      - name: Validate and cache
+        run: java Exec.java validate-cache
+
+  build-deb-x64:
+    name: Build Linux .deb for x86_64
+    if: ${{ inputs.build-deb-x64 }}
+    needs: validate
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'temurin'
+      - name: Setup caches
+        uses: actions/cache@v4
+        with:
+          path: cache
+          key: ${{ hashFiles('Exec.java', 'build.properties') }}
+          enableCrossOsArchive: true
+      - name: Build
+        env:
+          DPKG_DEB_COMPRESSOR_TYPE: xz
+        run: java Exec.java build linux x64 deb
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-deb-x64
+          path: |
+            dist/*.deb
+            dist/*.deb.sha*
+
+  build-deb-arm:
+    name: Build Linux .deb for aarch64
+    if: ${{ inputs.build-deb-arm }}
+    needs: validate
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'temurin'
+      - name: Setup caches
+        uses: actions/cache@v4
+        with:
+          path: cache
+          key: ${{ hashFiles('Exec.java', 'build.properties') }}
+          enableCrossOsArchive: true
+      - name: Build
+        env:
+          DPKG_DEB_COMPRESSOR_TYPE: xz
+        run: java Exec.java build linux arm deb
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-deb-aarch64
+          path: |
+            dist/*.deb
+            dist/*.deb.sha*
+
+  build-rpm-x64:
+    name: Build Linux .rpm for x86_64
+    if: ${{ inputs.build-rpm-x64 }}
+    needs: validate
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'temurin'
+      - name: Setup caches
+        uses: actions/cache@v4
+        with:
+          path: cache
+          key: ${{ hashFiles('Exec.java', 'build.properties') }}
+          enableCrossOsArchive: true
+      - name: Install RPM tools
+        run: |
+          sudo apt update
+          sudo apt install rpm
+      - name: Build
+        run: java Exec.java build linux x64 rpm
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-rpm-x64
+          path: |
+            dist/*.rpm
+            dist/*.rpm.sha*
+
+  build-windows-x64:
+    name: Build Windows .exe for x86_64
+    if: ${{ inputs.build-windows-x64 }}
+    needs: validate
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'temurin'
+      - name: Setup caches
+        uses: actions/cache@v4
+        with:
+          path: cache
+          key: ${{ hashFiles('Exec.java', 'build.properties') }}
+          enableCrossOsArchive: true
+      - name: Build
+        env:
+          INNOSETUP_PATH: 'C:\\Program Files (x86)\\Inno Setup 6\\iscc.exe'
+        run: java Exec.java build windows x64 innosetup
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe-x64
+          path: |
+            dist/*.exe
+            dist/*.exe.sha*
+
+  build-macos-arm:
+    name: Build macOS .pkg for aarch64
+    if: ${{ inputs.build-macos-arm }}
+    needs: validate
+    runs-on: macos-14
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'temurin'
+      - name: Setup caches
+        uses: actions/cache@v4
+        with:
+          path: cache
+          key: ${{ hashFiles('Exec.java', 'build.properties') }}
+          enableCrossOsArchive: true
+      - name: Install certificates
+        if: ${{ vars.APP_CERT_ID }}
+        env:
+          APP_CERT_BASE64: ${{ secrets.APP_CERT_BASE64 }}
+          INST_CERT_BASE64: ${{ secrets.INST_CERT_BASE64 }}
+          APP_CERT_PASSWORD: ${{ secrets.APP_CERT_PASSWORD }}
+          INST_CERT_PASSWORD: ${{ secrets.INST_CERT_PASSWORD }}
+        run: |
+          APP_CERT_PATH="$RUNNER_TEMP/app_cert.p12"
+          INST_CERT_PATH="$RUNNER_TEMP/inst_cert.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -base64 12)"
+          ###
+          echo -n "$APP_CERT_BASE64" | base64 --decode -o "$APP_CERT_PATH"
+          echo -n "$INST_CERT_BASE64" | base64 --decode -o "$INST_CERT_PATH"
+          ###
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$APP_CERT_PATH" -P "$APP_CERT_PASSWORD" -t cert -f pkcs12 -k "$KEYCHAIN_PATH" -T /usr/bin/codesign
+          security import "$INST_CERT_PATH" -P "$INST_CERT_PASSWORD" -t cert -f pkcs12 -k "$KEYCHAIN_PATH" -T /usr/bin/pkgbuild
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH"
+      - name: Build
+        env:
+          APP_CERT_ID: ${{ vars.APP_CERT_ID }}
+          INST_CERT_ID: ${{ vars.INST_CERT_ID }}
+        run: java Exec.java build macos arm pkg
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-pkg-aarch64
+          path: |
+            dist/*.pkg
+            dist/*.pkg.sha*
+
+  build-macos-x64:
+    name: Build macOS .pkg for x86_64
+    if: ${{ inputs.build-macos-x64 }}
+    needs: validate
+    runs-on: macos-14
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'temurin'
+      - name: Setup caches
+        uses: actions/cache@v4
+        with:
+          path: cache
+          key: ${{ hashFiles('Exec.java', 'build.properties') }}
+          enableCrossOsArchive: true
+      - name: Install certificates
+        if: ${{ vars.APP_CERT_ID }}
+        env:
+          APP_CERT_BASE64: ${{ secrets.APP_CERT_BASE64 }}
+          INST_CERT_BASE64: ${{ secrets.INST_CERT_BASE64 }}
+          APP_CERT_PASSWORD: ${{ secrets.APP_CERT_PASSWORD }}
+          INST_CERT_PASSWORD: ${{ secrets.INST_CERT_PASSWORD }}
+        run: |
+          APP_CERT_PATH="$RUNNER_TEMP/app_cert.p12"
+          INST_CERT_PATH="$RUNNER_TEMP/inst_cert.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -base64 12)"
+          ###
+          echo -n "$APP_CERT_BASE64" | base64 --decode -o "$APP_CERT_PATH"
+          echo -n "$INST_CERT_BASE64" | base64 --decode -o "$INST_CERT_PATH"
+          ###
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$APP_CERT_PATH" -P "$APP_CERT_PASSWORD" -t cert -f pkcs12 -k "$KEYCHAIN_PATH" -T /usr/bin/codesign
+          security import "$INST_CERT_PATH" -P "$INST_CERT_PASSWORD" -t cert -f pkcs12 -k "$KEYCHAIN_PATH" -T /usr/bin/pkgbuild
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH"
+      - name: Build
+        env:
+          APP_CERT_ID: ${{ vars.APP_CERT_ID }}
+          INST_CERT_ID: ${{ vars.INST_CERT_ID }}
+        run: java Exec.java build macos x64 pkg
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-pkg-x64
+          path: |
+            dist/*.pkg
+            dist/*.pkg.sha*
