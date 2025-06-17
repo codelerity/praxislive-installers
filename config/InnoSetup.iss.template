@@ -12,6 +12,7 @@ DefaultDirName="{autopf}\${APP_NAME_SAFE}"
 DisableProgramGroupPage=yes
 OutputBaseFilename="${APP_NAME_SAFE} ${APP_VERSION}"
 SetupIconFile="${EXEC_NAME}\etc\${EXEC_NAME}.ico"
+UninstallDisplayIcon="{app}\etc\${EXEC_NAME}.ico"
 Compression=lzma
 SolidCompression=yes
 ArchitecturesAllowed=x64
