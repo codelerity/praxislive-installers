@@ -218,23 +218,10 @@ public class Exec {
                 findFile(dist, "*.deb");
             case "rpm" ->
                 findFile(dist, "*.rpm");
-            case "innosetup" -> {
-                Path exe = findFile(dist, "*.exe");
-                exe = Files.move(exe, exe.getParent()
-                        .resolve(exe.getFileName().toString().replace(" ", "-")));
-                yield exe;
-            }
-            case "pkg" -> {
-                Path pkg = findFile(dist, "*.pkg");
-                String name = pkg.getFileName().toString().replace(" ", "-");
-                if (arch.equals("arm")) {
-                    name = name.replace(".pkg", "-aarch64.pkg");
-                } else {
-                    name = name.replace(".pkg", "-x86_64.pkg");
-                }
-                pkg = Files.move(pkg, pkg.getParent().resolve(name));
-                yield pkg;
-            }
+            case "innosetup" ->
+                findFile(dist, "*.exe");
+            case "pkg" ->
+                findFile(dist, "*.pkg");
             default ->
                 throw new IllegalStateException();
         };
