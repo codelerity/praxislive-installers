@@ -41,7 +41,7 @@ must then be defined.
   triggers signing, and all other related macOS variables and secrets must be
   added.
 - `AZURE_CERT_PROFILE_NAME` : the name of the certificate profile used by the
-  Azure Trusted Signing action during the Windows installer build. Presence of
+  Azure Artifact Signing action during the Windows installer build. Presence of
   this variable triggers signing, and all other related Windows secrets must be
   added.
 - `INST_CERT_ID` : the name of the Apple Developer Installer Certificate passed
@@ -54,15 +54,15 @@ must then be defined.
   installer signing.
 - `APP_CERT_PASSWORD` : password for the Apple Developer Application Certificate.
   Required for macOS installer signing.
-- `AZURE_CLIENT_ID` : the `azure-client-id` parameter for the Azure Trusted
+- `AZURE_CLIENT_ID` : the `azure-client-id` parameter for the Azure Artifact
   Signing action. Required for Windows installer signing.
 - `AZURE_CLIENT_SECRET` : the `azure-client-secret` parameter for the Azure
-  Trusted Signing action. Required for Windows installer signing.
-- `AZURE_CODE_SIGNING_NAME` : the `trusted-signing-account-name` parameter for
-  the Azure Trusted Signing action. Required for Windows installer signing.
-- `AZURE_ENDPOINT` : the `endpoint` parameter for the Azure Trusted Signing
+  Artifact Signing action. Required for Windows installer signing.
+- `AZURE_CODE_SIGNING_NAME` : the `signing-account-name` parameter for
+  the Azure Artifact Signing action. Required for Windows installer signing.
+- `AZURE_ENDPOINT` : the `endpoint` parameter for the Azure Artifact Signing
   action. Required for Windows installer signing.
-- `AZURE_TENANT_ID` : the `azure-tenant-id` parameter for the Azure Trusted
+- `AZURE_TENANT_ID` : the `azure-tenant-id` parameter for the Azure Artifact
   Signing action. Required for Windows installer signing.
 - `INST_CERT_BASE64` : the Apple Developer Installer Certificate exported as
   base64. Required for macOS installer signing.
