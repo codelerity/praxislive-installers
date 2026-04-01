@@ -25,6 +25,8 @@ on:
         description: 'Build macOS .pkg for x86_64'
         type: boolean
 
+permissions:
+  contents: write
 
 jobs:
   
